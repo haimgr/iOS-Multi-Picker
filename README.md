@@ -4,7 +4,7 @@ Multi Picker Dialog is a customizable class that displays a UItableView with mul
 for iOS apps.  This project builds on [iOS-PickerDialog](https://github.com/aguynamedloren/ios-picker-dialog),
 a picker dialog developed by [aguynamedloren](https://github.com/aguynamedloren).
 
-## This is a Swift 2.3 version
+## This is a Swift 4.2 version
 
 ![Demo screen](demo.gif)
 
@@ -20,20 +20,10 @@ var selectedIDs  : [String] = []
 @IBAction func clicked(_ sender: UIButton) {
         
         
-        let pickerData : [[String:String]] = [
-            [
-                "value":"en",
-                "display":"English"
-            ],
-            [
-                "value":"ar",
-                "display":"العربية"
-            ],
-            [
-                "value":"fr",
-                "display":"le français"
-            ]
-        ]
+        let pickerData : [String] =
+            ["English",
+            "العربية",
+            "le français"]
         
         
         
@@ -43,9 +33,9 @@ var selectedIDs  : [String] = []
             print("callBack \(values)")
             var finalText = ""
             self.selectedIDs.removeAll()
-            for (index,value) in values.enumerate(){
-                self.selectedIDs.append(value["value"]!)
-                finalText = finalText  + value["display"]! + (index < values.count - 1 ? " , ": "")
+            for (index,value) in values.enumerated(){
+                self.selectedIDs.append(value)
+                finalText = finalText  + value + (index < values.count - 1 ? " , ": "")
             }
             sender.titleLabel?.text = finalText
         }
@@ -60,7 +50,7 @@ var selectedIDs  : [String] = []
 * doneButtonTitle: String
 * cancelButtonTitle: String
 * selected: [String] (Array of selected IDs)
-* callback: ((value: [[String:String]]) -> Void) (Required)
+* callback: ((value: [String]) -> Void) (Required)
 
 
 ## Special thanks to
