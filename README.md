@@ -2,6 +2,7 @@ Changes in this fork:
 
 - Upgraded to Swift 5.
 - Selection is indicated by array of indices, instead of array of strings.
+- Text alignment of options is natural instead of left. (Why was it left?)
 
 -----
 -----

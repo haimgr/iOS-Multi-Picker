@@ -79,20 +79,6 @@ class MultiPickerDialog: UIView, UITableViewDelegate, UITableViewDataSource {
         close() // For now just close it
     }
     
-    /* Helper to find row of selected value */
-    func findIndicesForValues(values: [String], array: [String]) -> [Int] {
-        var selectedIndices : [Int] = []
-        for (index, dictionary) in array.enumerated() {
-            for selectedOption in values {
-                if dictionary == selectedOption {
-                    selectedIndices.append(index)
-                }
-            }
-            
-        }
-        return selectedIndices
-    }
-    
     /* Create the dialog view, and animate opening the dialog */
     func show(title: String, doneButtonTitle: String = "Select", cancelButtonTitle: String = "Cancel", options: [String], selected: [Int]? = nil, callback: @escaping MultiPickerCallback) {
         self.titleLabel.text = title
@@ -101,8 +87,8 @@ class MultiPickerDialog: UIView, UITableViewDelegate, UITableViewDataSource {
         self.cancelButton.setTitle(cancelButtonTitle, for: .normal)
         self.callback = callback
         
-        if selected != nil {
-            let selectedIndices = self.selectedPickerIndices ?? []
+        if let selectedIndices = selected {
+            self.selectedPickerIndices = selectedIndices
             print("selectedIndices \(selectedIndices)")
             for index in selectedIndices{
                 let selectedCellIndexPath = IndexPath.init(row: index, section: 0)
@@ -278,7 +264,6 @@ class MultiPickerDialog: UIView, UITableViewDelegate, UITableViewDataSource {
         let theCell = cell
         theCell.textLabel?.text = self.pickerData[indexPath.row]
         theCell.contnetIdentifier = self.pickerData[indexPath.row]
-        theCell.textLabel?.textAlignment = .left
         theCell.backgroundColor = UIColor.clear
         theCell.selectionStyle = .none
         let selectedIndexPaths = tableView.indexPathsForSelectedRows
