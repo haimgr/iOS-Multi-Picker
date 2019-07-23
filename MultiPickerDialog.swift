@@ -10,10 +10,10 @@ import ObjectiveC
 
 
 class MultiPickerDialog: UIView, UITableViewDelegate, UITableViewDataSource {
-   
     
     
-    typealias MultiPickerCallback = (_ values: [String]) -> Void
+    
+    typealias MultiPickerCallback = ([Int]) -> Void
     
     /* Constants */
     private let kPickerDialogDefaultButtonHeight:       CGFloat = 50
@@ -30,7 +30,7 @@ class MultiPickerDialog: UIView, UITableViewDelegate, UITableViewDataSource {
     
     /* Variables */
     private var pickerData =         [String]()
-    private var selectedPickerValues: [String]?
+    private var selectedPickerIndices: [Int]?
     private var callback:            MultiPickerCallback?
     
     
@@ -44,7 +44,7 @@ class MultiPickerDialog: UIView, UITableViewDelegate, UITableViewDataSource {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func setupView() {
+    private func setupView() {
         self.dialogView = createContainerView()
         
         self.dialogView!.layer.shouldRasterize = true
@@ -94,7 +94,7 @@ class MultiPickerDialog: UIView, UITableViewDelegate, UITableViewDataSource {
     }
     
     /* Create the dialog view, and animate opening the dialog */
-    func show(title: String, doneButtonTitle: String = "Select", cancelButtonTitle: String = "Cancel", options: [String], selected: [String]? = nil, callback: @escaping MultiPickerCallback) {
+    func show(title: String, doneButtonTitle: String = "Select", cancelButtonTitle: String = "Cancel", options: [String], selected: [Int]? = nil, callback: @escaping MultiPickerCallback) {
         self.titleLabel.text = title
         self.pickerData = options
         self.doneButton.setTitle(doneButtonTitle, for: .normal)
@@ -102,8 +102,7 @@ class MultiPickerDialog: UIView, UITableViewDelegate, UITableViewDataSource {
         self.callback = callback
         
         if selected != nil {
-            self.selectedPickerValues = selected
-            let selectedIndices = findIndicesForValues(values: selected!, array: options)
+            let selectedIndices = self.selectedPickerIndices ?? []
             print("selectedIndices \(selectedIndices)")
             for index in selectedIndices{
                 let selectedCellIndexPath = IndexPath.init(row: index, section: 0)
@@ -114,17 +113,17 @@ class MultiPickerDialog: UIView, UITableViewDelegate, UITableViewDataSource {
         
         let appDelegate = UIApplication.shared.delegate as! AppDelegate
         appDelegate.window?.addSubview(self)
-        appDelegate.window?.bringSubview(toFront: self)
+        appDelegate.window?.bringSubviewToFront(self)
         appDelegate.window?.endEditing(true)
         
         
-        NotificationCenter.default.addObserver(self, selector: #selector(MultiPickerDialog.deviceOrientationDidChange(notification:)), name: NSNotification.Name.UIDeviceOrientationDidChange, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(MultiPickerDialog.deviceOrientationDidChange(notification:)), name: UIDevice.orientationDidChangeNotification, object: nil)
         
         /* Anim */
         UIView.animate(
             withDuration: 0.2,
             delay: 0,
-            options: UIViewAnimationOptions.curveEaseOut,
+            options: UIView.AnimationOptions.curveEaseOut,
             animations: { () -> Void in
                 self.backgroundColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.4)
                 self.dialogView!.layer.opacity = 1
@@ -149,7 +148,7 @@ class MultiPickerDialog: UIView, UITableViewDelegate, UITableViewDataSource {
         UIView.animate(
             withDuration: 0.2,
             delay: 0,
-            options: UIViewAnimationOptions.allowUserInteraction,
+            options: UIView.AnimationOptions.allowUserInteraction,
             animations: { () -> Void in
                 self.backgroundColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0)
                 self.dialogView.layer.transform = CATransform3DConcat(currentTransform, CATransform3DMakeScale(0.6, 0.6, 1))
@@ -213,7 +212,7 @@ class MultiPickerDialog: UIView, UITableViewDelegate, UITableViewDataSource {
         
         self.picker = UITableView(frame: CGRect(x:0, y:40, width:100, height: 100))
         //self.picker.setValue(UIColor(hex: 0x333333), forKeyPath: "textColor")
-        self.picker.autoresizingMask = UIViewAutoresizing.flexibleRightMargin
+        self.picker.autoresizingMask = UIView.AutoresizingMask.flexibleRightMargin
         self.picker.frame.size.width = 300
         self.picker.frame.size.height = 200
         self.picker.backgroundColor = UIColor.clear
@@ -229,38 +228,32 @@ class MultiPickerDialog: UIView, UITableViewDelegate, UITableViewDataSource {
     private func addButtonsToView(container: UIView) {
         let buttonWidth = container.bounds.size.width / 2
         
-        self.cancelButton = UIButton(type: UIButtonType.custom) as UIButton
+        self.cancelButton = UIButton(type: UIButton.ButtonType.custom) as UIButton
         self.cancelButton.frame = CGRect(x: 0, y: container.bounds.size.height - kPickerDialogDefaultButtonHeight, width: buttonWidth, height: kPickerDialogDefaultButtonHeight)
-        self.cancelButton.setTitleColor(UIColor(hex: 0x555555), for: UIControlState.normal)
-        self.cancelButton.setTitleColor(UIColor(hex: 0x555555), for: UIControlState.highlighted)
+        self.cancelButton.setTitleColor(UIColor(hex: 0x555555), for: UIControl.State.normal)
+        self.cancelButton.setTitleColor(UIColor(hex: 0x555555), for: UIControl.State.highlighted)
         self.cancelButton.titleLabel!.font = UIFont(name: "AvenirNext-Medium", size: 15)
         self.cancelButton.layer.cornerRadius = kPickerDialogCornerRadius
-        self.cancelButton.addTarget(self, action: #selector(MultiPickerDialog.buttonTapped(sender:)), for: UIControlEvents.touchUpInside)
+        self.cancelButton.addTarget(self, action: #selector(MultiPickerDialog.buttonTapped(sender:)), for: UIControl.Event.touchUpInside)
         container.addSubview(self.cancelButton)
         
-        self.doneButton = UIButton(type: UIButtonType.custom) as UIButton
+        self.doneButton = UIButton(type: UIButton.ButtonType.custom) as UIButton
         self.doneButton.frame = CGRect(x: buttonWidth, y: container.bounds.size.height - kPickerDialogDefaultButtonHeight, width: buttonWidth, height: kPickerDialogDefaultButtonHeight)
         self.doneButton.tag = kPickerDialogDoneButtonTag
-        self.doneButton.setTitleColor(UIColor(hex: 0x555555), for: UIControlState.normal)
-        self.doneButton.setTitleColor(UIColor(hex: 0x555555), for: UIControlState.highlighted)
+        self.doneButton.setTitleColor(UIColor(hex: 0x555555), for: UIControl.State.normal)
+        self.doneButton.setTitleColor(UIColor(hex: 0x555555), for: UIControl.State.highlighted)
         self.doneButton.titleLabel!.font = UIFont(name: "AvenirNext-Medium", size: 15)
         self.doneButton.layer.cornerRadius = kPickerDialogCornerRadius
-        self.doneButton.addTarget(self, action: #selector(MultiPickerDialog.buttonTapped(sender:)), for: UIControlEvents.touchUpInside)
+        self.doneButton.addTarget(self, action: #selector(MultiPickerDialog.buttonTapped(sender:)), for: UIControl.Event.touchUpInside)
         container.addSubview(self.doneButton)
     }
     
     @objc func buttonTapped(sender: UIButton!) {
         if sender.tag == kPickerDialogDoneButtonTag {
-            var theSelectedValues : [String] = []
-            
-            if let indexPathsForSelectedRows = self.picker.indexPathsForSelectedRows{
-                for indexPath  in indexPathsForSelectedRows{
-                    let cell = self.picker.cellForRow(at: indexPath)
-                    theSelectedValues.append(cell?.textLabel?.text ?? "")
-                }
+            let selectedIndices: [Int] = (self.picker.indexPathsForSelectedRows ?? []).map { indexPath in
+                indexPath.row
             }
-            
-            self.callback?(theSelectedValues)
+            self.callback?(selectedIndices)
         }
         
         close()
@@ -302,21 +295,21 @@ class MultiPickerDialog: UIView, UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         //tableView.cellForRowAtIndexPath(indexPath)?.selected = true
-        tableView.cellForRow(at: indexPath)?.accessoryType = UITableViewCellAccessoryType.checkmark
+        tableView.cellForRow(at: indexPath)?.accessoryType = UITableViewCell.AccessoryType.checkmark
     }
     
     func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
         //tableView.cellForRowAtIndexPath(indexPath)?.selected = false
-        tableView.cellForRow(at: indexPath)?.accessoryType = UITableViewCellAccessoryType.none
+        tableView.cellForRow(at: indexPath)?.accessoryType = UITableViewCell.AccessoryType.none
     }
     
     
     
 }
 
-var AssociatedObjectHandleOfCellContnetIdentifier: UInt8 = 0
+private var AssociatedObjectHandleOfCellContnetIdentifier: UInt8 = 0
 
-extension UITableViewCell {
+private extension UITableViewCell {
     var contnetIdentifier:String? {
         get {
             return objc_getAssociatedObject(self, &AssociatedObjectHandleOfCellContnetIdentifier) as? String
@@ -327,7 +320,7 @@ extension UITableViewCell {
     }
 }
 
-extension UIColor {
+private extension UIColor {
     convenience init(hex: Int, alpha: Float = 1.0){
         let r = Float((hex >> 16) & 0xFF)
         let g = Float((hex >> 8) & 0xFF)

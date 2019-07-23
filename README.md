@@ -1,10 +1,18 @@
+Changes in this fork:
+
+- Upgraded to Swift 5.
+- Selection is indicated by array of indices, instead of array of strings.
+
+-----
+-----
+
 # Multi Picker Dialog
 
 Multi Picker Dialog is a customizable class that displays a UItableView with multiSelection option in a dialog
 for iOS apps.  This project builds on [iOS-PickerDialog](https://github.com/aguynamedloren/ios-picker-dialog),
 a picker dialog developed by [aguynamedloren](https://github.com/aguynamedloren).
 
-## This is a Swift 4.2 version
+## This is a Swift 5 version
 
 ![Demo screen](demo.gif)
 
@@ -26,18 +34,13 @@ var selectedIDs  : [String] = []
             "le français"]
         
         
-        
-        MultiPickerDialog().show("Custom Title",doneButtonTitle:"Done Title", cancelButtonTitle:"Cancel Title" ,options: pickerData, selected:  self.selectedIDs) {
-            values -> Void in
-            //print("SELECTED \(value), \(showName)")
-            print("callBack \(values)")
-            var finalText = ""
-            self.selectedIDs.removeAll()
-            for (index,value) in values.enumerated(){
-                self.selectedIDs.append(value)
-                finalText = finalText  + value + (index < values.count - 1 ? " , ": "")
-            }
-            sender.titleLabel?.text = finalText
+        let initialIndices = pickerData.indices.filter { i in self.selectedIDs.containes(pickerData[i]) }
+
+        MultiPickerDialog().show("Custom Title",doneButtonTitle:"Done Title", cancelButtonTitle:"Cancel Title" ,options: pickerData, selected:  initialIndices) {
+            selectedIndices in
+            print("callBack \(selectedIndices)")
+            self.selectedIDs = selectedIndices.map { i in pickerData[i] }
+            sender.titleLabel?.text = self.selectedIDs.joined(separator: ", ")
         }
 
     }
@@ -49,8 +52,8 @@ var selectedIDs  : [String] = []
 * title: String (Required)
 * doneButtonTitle: String
 * cancelButtonTitle: String
-* selected: [String] (Array of selected IDs)
-* callback: ((value: [String]) -> Void) (Required)
+* selected: [Int] (Array of selected indices)
+* callback: (([Int]) -> Void) (Required)
 
 
 ## Special thanks to
